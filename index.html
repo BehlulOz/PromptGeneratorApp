@@ -1,0 +1,250 @@
+<title>Reels Prompt Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: one column, form card on top, seven prompt cards below; each card = filled prompt + run area */
+:root{
+  --bg:#eef3fa; --panel:#ffffff; --field:#ffffff; --fg:#0b1220; --muted:#3f4d63; --line:#d6dfec;
+  --accent:#0a84ff; --accent-ink:#083e8c; --accent-bg:#e3f0ff; --danger:#c62828;
+  --shadow:0 10px 30px rgba(15,35,80,.10), 0 2px 6px rgba(15,35,80,.06);
+  --font-display:"Sora",system-ui,sans-serif; --font-body:"IBM Plex Sans",system-ui,sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1627; --panel:#172640; --field:#0f1b2d; --fg:#f7faff; --muted:#b7c4d8; --line:#34496a;
+  --accent:#4da3ff; --accent-ink:#dcecff; --accent-bg:#1e3f6e; --danger:#ff8a80;
+  --shadow:0 10px 30px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1627; --panel:#172640; --field:#0f1b2d; --fg:#f7faff; --muted:#b7c4d8; --line:#34496a;
+  --accent:#4da3ff; --accent-ink:#dcecff; --accent-bg:#1e3f6e; --danger:#ff8a80;
+  --shadow:0 10px 30px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.65 var(--font-body);padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:20px}
+h1{font:700 26px/1.2 var(--font-display);margin:0;text-wrap:balance}
+h2{font:500 17px/1.3 var(--font-display);margin:0}
+.lede{color:var(--muted);margin:6px 0 0;font-size:15px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;min-width:0;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.f{display:grid;gap:4px;min-width:0}
+.f label{font-size:13px;color:var(--muted);letter-spacing:.01em}
+.f small{font-size:12px;color:var(--muted)}
+input,select,textarea{width:100%;font:inherit;font-size:15px;color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:74px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.sec{font:500 12px/1 var(--font-display);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+button{font:500 14px var(--font-body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#ffffff;border-color:var(--accent);box-shadow:0 6px 16px rgba(10,132,255,.35)}
+button[disabled]{opacity:.5;cursor:default}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.err{color:var(--danger);font-size:13px;margin:8px 0 0}
+.p{display:grid;gap:12px}
+.p header{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.p .n{font:700 13px var(--font-display);color:var(--accent-ink);background:var(--accent-bg);border-radius:4px;padding:2px 8px;margin-right:8px}
+.p .status{font-size:12px;color:var(--muted)}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font:14px/1.6 var(--font-mono);background:var(--field);border:1px solid var(--line);border-radius:12px;padding:14px;max-height:180px;overflow:auto}
+pre mark{background:var(--accent-bg);color:var(--accent-ink);padding:0 2px;border-radius:2px}
+.out{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.65;border-top:1px dashed var(--line);padding-top:12px}
+.out:empty{display:none}
+.tag{font-size:12px;color:var(--muted)}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.f .lab{display:flex;justify-content:space-between;align-items:center;gap:8px}
+button.pick{font-size:12px;padding:3px 9px;color:var(--accent-ink);background:var(--accent-bg);border-color:transparent}
+.sug{display:grid;gap:6px;margin-top:6px}
+.sug .st{font-size:12px;color:var(--muted)}
+.sug button.opt{text-align:left;font-weight:400;font-size:14px;line-height:1.4;padding:10px 12px;white-space:normal;border-radius:12px}
+.sug button.opt b{display:block;font-weight:500}
+.sug .src{font-size:12px;color:var(--muted)}
+.sug .src a{color:inherit}
+@media (prefers-reduced-motion:no-preference){.out.live::after{content:"▍";animation:b 1s steps(2) infinite}@keyframes b{50%{opacity:0}}}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Reels Prompt Lab</h1>
+    <p class="lede">Seven Reels-strategy prompts from the @haroonaicreator carousel. Fill the blanks once, then copy any prompt or run it here.</p>
+  </div>
+
+  <section class="card">
+    <h2>Your inputs</h2>
+    <p class="hint">Fields marked * are used by every prompt. Your draft stays in this browser.</p>
+    <div class="sec">Account</div>
+    <div class="grid">
+      <div class="f"><label for="niche">Niche *</label><input id="niche" placeholder="handmade jewelry for minimalists"></div>
+      <div class="f"><label for="aud">Target audience *</label><input id="aud" placeholder="women 25–40 who buy gifts online"></div>
+      <div class="f"><label for="fol">Current followers *</label><input id="fol" type="number" min="0" placeholder="1200"></div>
+      <div class="f"><div class="lab"><label for="goal">Main goal *</label><button class="pick" data-for="goal" hidden>Choose for me</button></div><select id="goal"><option value="">Choose one</option><option>Reach</option><option>Followers</option><option>Sales</option></select><div class="sug" id="sug-goal"></div></div>
+    </div>
+    <p class="hint" id="pickhint" hidden style="margin-top:12px">"Choose for me" searches the web for current Reels trends in your niche, then has Claude recommend options. It uses your Apify connector and your Claude usage.</p>
+    <div class="sec">Content</div>
+    <div class="grid">
+      <div class="f"><div class="lab"><label for="topic">Reel topic <small>(prompts 2, 4)</small></label><button class="pick" data-for="topic" hidden>Choose for me</button></div><input id="topic" placeholder="how I price a custom order"><div class="sug" id="sug-topic"></div></div>
+      <div class="f"><label for="num">Reels you can post per day <small>(prompt 7)</small></label><input id="num" type="number" min="1" placeholder="1"></div>
+    </div>
+    <div class="f" style="margin-top:14px"><div class="lab"><label for="idea">One Reel idea to script <small>(prompt 3)</small></label><button class="pick" data-for="idea" hidden>Choose for me</button></div><textarea id="idea" placeholder="Behind the scenes of packing 50 orders in one evening"></textarea><div class="sug" id="sug-idea"></div></div>
+    <div class="f" style="margin-top:14px"><div class="lab"><label for="trends">Trends or formats you're considering <small>(prompt 6)</small></label><button class="pick" data-for="trends" hidden>Choose for me</button></div><textarea id="trends" placeholder="POV text overlays, day-in-the-life, ASMR packing, before/after"></textarea><div class="sug" id="sug-trends"></div></div>
+    <div class="f" style="margin-top:14px"><div class="lab"><label for="fmt">Formats available to you <small>(prompt 7)</small></label><button class="pick" data-for="fmt" hidden>Choose for me</button></div><input id="fmt" placeholder="talking head, voiceover b-roll, text-only, screen recording"><div class="sug" id="sug-fmt"></div></div>
+    <div class="sec">Existing Reel (prompt 5)</div>
+    <div class="f"><label for="content">Script or caption</label><textarea id="content" placeholder="Paste the script or caption"></textarea></div>
+    <div class="f" style="margin-top:14px"><label for="metrics">Metrics</label><textarea id="metrics" placeholder="views 4.2k, avg watch 38%, saves 12, shares 3, comments 5, profile visits 20"></textarea></div>
+    <div class="bar">
+      <button class="primary" id="build">Fill the prompts</button>
+      <button id="runall" hidden>Run all filled prompts</button>
+      <button id="clear">Clear</button>
+      <span class="tag" id="saved"></span>
+    </div>
+    <p class="err" id="err" hidden></p>
+  </section>
+
+  <div id="prompts" class="wrap" style="gap:16px"></div>
+</div>
+
+<script>
+const PROMPTS=[
+ {t:"Find your best opportunity for the next 7 days",needs:["niche","aud","fol","goal"],
+  s:"Act as my Instagram Reels strategist. My niche is [NICHE], my target audience is [AUDIENCE], my account has [FOLLOWERS] followers, and my goal is [GOAL].\n\nGive me 7 Reel opportunities I can realistically test over the next 7 days.\n\nFor each one, include the audience problem or desire, content angle, hook concept, format, expected viewer takeaway, and why it fits my niche.\n\nPrioritize strong audience demand and original angles over generic trends."},
+ {t:"Find your strongest hook",needs:["topic","aud"],
+  s:"The topic of my Reel is [TOPIC], and my audience is [AUDIENCE].\n\nCreate 20 opening hooks designed for the first 1 to 3 seconds.\n\nUse different mechanisms such as curiosity, surprising contrast, a specific problem, a mistake, transformation, a strong opinion, narrative tension, and a useful promise.\n\nAvoid clickbait and empty phrases.\n\nRank the top 5 based on clarity, curiosity, relevance, and how likely they are to keep the right viewer watching."},
+ {t:"Create a retention-focused Reel",needs:["idea"],
+  s:"Take this Reel idea: [IDEA] and turn it into a Reel built for retention.\n\nCreate the opening hook, scene-by-scene structure, spoken script, on-screen text, visual changes, payoff, and ending.\n\nMake sure every section has a reason to be there. Remove filler, deliver meaningful value quickly, and create curiosity only when there is a real payoff.\n\nGive me an approximate duration for each section. Make the final Reel sound natural instead of like it was written by AI."},
+ {t:"Make people want to save and share it",needs:["topic"],
+  s:"Turn [TOPIC] into a Reel people will genuinely want to save or send to someone.\n\nGive me 5 concepts based on practical usefulness, identity, emotional relevance, surprise, or problem-solving.\n\nFor each one, provide the hook, value structure, visual concept, and a natural call to action.\n\nAvoid asking people to share it, artificially forcing engagement, or making exaggerated claims. Make the content useful enough that sharing it feels like helping someone."},
+ {t:"Improve a Reel you already have",needs:["content"],
+  s:"Here is my Reel's script or caption, and its performance data:\n\n[CONTENT + METRICS]\n\nDiagnose the strongest and weakest parts using the available information.\n\nAnalyze the hook, topic, clarity, pacing, retention, shares, saves, comments, profile actions, and conversion signals when available.\n\nTell me what we can confidently conclude, what we cannot know, and give me the 3 highest-priority changes for my next Reel.\n\nThen rewrite the Reel using those insights."},
+ {t:"Follow trends strategically",needs:["trends","niche"],
+  s:"These are the trends or formats I'm considering: [TRENDS]. My niche is [NICHE].\n\nIdentify the content mechanism behind each trend and show me how to adapt that mechanism to my audience without copying another creator's content.\n\nGive me 10 original concepts using my knowledge, stories, examples, and point of view.\n\nFlag any idea that feels forced, oversaturated, or too derivative."},
+ {t:"Create a 7-day testing calendar",needs:["niche","goal","num","fmt"],
+  s:"Create a 7-day Reels testing plan for [NICHE].\n\nMy goal is [GOAL], I can post [NUMBER] Reels per day, and the formats available to me are [FORMATS].\n\nGive each Reel a clear hypothesis, topic, hook, format, payoff, call to action, and primary metric to track.\n\nDeliberately vary the tests so I can discover which topics, hooks, formats, and angles perform best instead of repeating the same idea."}
+];
+const FIELDS=["niche","aud","fol","goal","topic","idea","trends","fmt","num","content","metrics"];
+const LABEL={niche:"niche",aud:"audience",fol:"followers",goal:"goal",topic:"topic",idea:"Reel idea",trends:"trends",fmt:"formats",num:"Reels per day",content:"existing Reel script"};
+const $=id=>document.getElementById(id);
+const v=id=>$(id).value.trim();
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+function values(){const o={};FIELDS.forEach(f=>o[f]=v(f));return o}
+function fill(p,o){
+  const cm=o.content+(o.metrics?"\n\nMetrics: "+o.metrics:"");
+  const map={"[NICHE]":o.niche,"[AUDIENCE]":o.aud,"[FOLLOWERS]":o.fol,"[GOAL]":o.goal,"[TOPIC]":o.topic,"[IDEA]":o.idea,"[TRENDS]":o.trends,"[NUMBER]":o.num,"[FORMATS]":o.fmt,"[CONTENT + METRICS]":cm};
+  return p.s.replace(/\[[A-Z +\/]+\]/g,k=>map[k]||k);
+}
+function save(){try{localStorage.setItem("rpl",JSON.stringify(values()));$("saved").textContent="Draft saved"}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem("rpl")||"{}");FIELDS.forEach(f=>{if(o[f])$(f).value=o[f]})}catch(e){}}
+FIELDS.forEach(f=>$(f).addEventListener("input",()=>{$("err").hidden=true;save()}));
+load();
+
+let sample=null,mcp=null,runners=[];
+claude.use("sample").then(s=>{sample=s;if(s){document.querySelectorAll(".run,.pick").forEach(b=>b.hidden=false);$("pickhint").hidden=false}});
+claude.use("mcp").then(m=>{mcp=m});
+
+/* ---- Choose for me: live web research (Apify) + Claude recommendation ---- */
+const research={};  /* niche -> {text, sources, live} */
+const SPEC={
+  goal:{ask:"which main goal (exactly one of: Reach, Followers, Sales) this account should optimize for over the next 7 days",n:3,fixed:["Reach","Followers","Sales"]},
+  topic:{ask:"specific Reel topics for this account (each one concrete enough to film this week)",n:4},
+  idea:{ask:"complete Reel ideas (one sentence each: what happens on screen and the payoff) for this account",n:4},
+  trends:{ask:"currently trending Reels formats or trends worth testing for this niche (comma-separated list of 3–5 per option, each option a different mix)",n:3},
+  fmt:{ask:"realistic sets of production formats for a solo creator in this niche (comma-separated per option, e.g. talking head, voiceover b-roll, text-only)",n:3}
+};
+function monthYear(){return new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}
+function trim(s,n){s=(s||"").replace(/\s+/g," ");return s.length>n?s.slice(0,n)+"…":s}
+
+async function webResearch(niche,st){
+  if(research[niche])return research[niche];
+  if(!mcp){return research[niche]={text:"",sources:[],live:false,why:"Live search isn't available in this view."}}
+  const q=`Instagram Reels trends ${monthYear()} ${niche}`;
+  try{
+    st.textContent="Searching the web for current trends…";
+    const run=await mcp.callTool("Apify","apify--rag-web-browser",{query:q,maxResults:3,outputFormats:["text"],waitSecs:45},{cache:{staleTime:3600000,gcTime:3600000}});
+    const dsId=run.payload?.storages?.datasets?.default?.id;
+    if(!dsId)throw{code:"tool_error",message:"no dataset"};
+    st.textContent="Reading the pages…";
+    const rows=await mcp.callTool("Apify","get-dataset-items",{datasetId:dsId,clean:true,limit:3,fields:"text,searchResult.title,searchResult.url"},{cache:{staleTime:3600000,gcTime:3600000}});
+    const items=(rows.payload?.items)||[];
+    const sources=items.map(i=>({title:i["searchResult.title"]||i.searchResult?.title||"Source",url:i["searchResult.url"]||i.searchResult?.url||""})).filter(s=>s.url);
+    const text=items.map((i,k)=>`SOURCE ${k+1} (${sources[k]?.title||""}):\n${trim(i.text,3500)}`).join("\n\n");
+    return research[niche]={text,sources,live:!!text};
+  }catch(e){
+    const fix={server_not_connected:"Apify isn't connected. Add it in claude.ai Settings → Connectors.",needs_reauth:"Reconnect Apify in claude.ai Settings → Connectors.",not_in_manifest:"Apify wasn't allowed for this page.",approval_required:"Apify needs your approval on this page."};
+    return research[niche]={text:"",sources:[],live:false,why:fix[e.code]||"Live search failed."};
+  }
+}
+
+async function suggest(field,btn){
+  const o=values(),sp=SPEC[field],box=$("sug-"+field);
+  if(!o.niche||!o.aud){$("err").textContent="Fill in niche and audience first.";$("err").hidden=false;return}
+  if(!sample)return;
+  btn.disabled=true;box.innerHTML='<span class="st">Working…</span>';const st=box.firstChild;
+  try{
+    const r=await webResearch(o.niche,st);
+    st.textContent="Asking Claude for recommendations…";
+    const ctx=`Today is ${new Date().toDateString()}.\nAccount: niche "${o.niche}", audience "${o.aud}", ${o.fol||"unknown"} followers, goal "${o.goal||"unset"}".`;
+    const basis=r.live?`Use ONLY the research below as evidence of current trends; prefer what is recent and recurring across sources.\n\n${r.text}`:"No live research is available; use well-established Reels best practices and say so.";
+    const prompt=`${ctx}\n\nRecommend ${sp.n} ${sp.ask}.${sp.fixed?` Each "value" must be exactly one of: ${sp.fixed.join(", ")}; order them best first.`:""}\n\n${basis}\n\nReply with only a JSON object: {"options":[{"value":"<text to put in the field>","why":"<one short sentence tied to the research or the account>"}]}`;
+    const out=await sample.json(prompt,{modelTier:"default"});
+    const opts=Array.isArray(out?.options)?out.options.slice(0,sp.n):[];
+    if(!opts.length)throw{code:"empty_completion"};
+    box.innerHTML="";
+    opts.forEach(op=>{
+      const b=document.createElement("button");b.className="opt";
+      b.innerHTML=`<b>${esc(String(op.value||""))}</b>${esc(String(op.why||""))}`;
+      b.onclick=()=>{$(field).value=String(op.value||"");save();box.innerHTML="";$("err").hidden=true};
+      box.append(b);
+    });
+    const src=document.createElement("div");src.className="src";
+    src.innerHTML=r.live?"Based on: "+r.sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(trim(s.title,60))}</a>`).join(" · "):"Based on Claude's general knowledge. "+esc(r.why||"");
+    box.append(src);
+  }catch(e){
+    const m={not_granted:"Claude isn't allowed on this page.",rate_limited:"Usage limit reached. Try again later.",refused:"Claude declined this request.",invalid_json:"Couldn't read the answer. Try again."};
+    box.innerHTML=`<span class="st">${esc(m[e.code]||"Something went wrong. Try again.")}</span>`;
+    if(e.code==="not_granted"||e.code==="sampling_disabled"){sample=null;document.querySelectorAll(".run,.pick").forEach(b=>b.hidden=true);$("pickhint").hidden=true;$("runall").hidden=true}
+  }finally{btn.disabled=false}
+}
+document.querySelectorAll(".pick").forEach(b=>b.onclick=()=>suggest(b.dataset.for,b));
+
+async function copy(text,btn){
+  try{await navigator.clipboard.writeText(text);btn.textContent="Copied";}
+  catch(e){const r=document.createRange();r.selectNodeContents(btn.closest(".p").querySelector("pre"));getSelection().removeAllRanges();getSelection().addRange(r);btn.textContent="Selected, press copy";}
+  setTimeout(()=>btn.textContent="Copy prompt",1800);
+}
+async function run(text,card){
+  if(!sample)return;
+  const out=card.querySelector(".out"),st=card.querySelector(".status"),btn=card.querySelector(".run"),stop=card.querySelector(".stop");
+  const ctl=new AbortController();stop.hidden=false;stop.onclick=()=>ctl.abort();
+  btn.disabled=true;st.textContent="Thinking…";out.textContent="";out.classList.add("live");
+  try{
+    const r=await sample(text,{signal:ctl.signal,cache:false,onText:({text})=>{out.textContent=text;st.textContent="Writing…"}});
+    st.textContent=r.truncated?"Cut short; ask for less at a time.":"Done";
+  }catch(e){
+    out.textContent=e.text||"";
+    const m={not_granted:"Claude isn't allowed on this page. Copy the prompt and paste it into Claude instead.",rate_limited:"Usage limit reached. Try again later.",refused:"Claude declined this input. Adjust the fields.",cancelled:"Stopped.",sampling_disabled:"Claude isn't available on this account."};
+    st.textContent=m[e.code]||"Something went wrong. Try again.";
+    if(e.code==="not_granted"||e.code==="sampling_disabled"){sample=null;document.querySelectorAll(".run,.pick").forEach(b=>b.hidden=true);$("pickhint").hidden=true;$("runall").hidden=true}
+  }finally{btn.disabled=false;stop.hidden=true;out.classList.remove("live")}
+}
+
+$("build").onclick=()=>{
+  const o=values();
+  const miss=["niche","aud","fol","goal"].filter(f=>!o[f]);
+  if(miss.length){$("err").textContent="Fill in: "+miss.map(f=>LABEL[f]).join(", ");$("err").hidden=false;return}
+  const host=$("prompts");host.innerHTML="";runners=[];
+  PROMPTS.forEach((p,i)=>{
+    const lacking=p.needs.filter(f=>!o[f]);
+    const text=fill(p,o);
+    const card=document.createElement("section");card.className="card p";
+    card.innerHTML=`<header><h2><span class="n">${i+1}</span>${esc(p.t)}</h2><span class="status">${lacking.length?"Needs: "+lacking.map(f=>LABEL[f]).join(", "):"Ready"}</span></header>
+      <pre>${esc(text).replace(/\[[A-Z +\/]+\]/g,m=>"<mark>"+m+"</mark>")}</pre>
+      <div class="bar" style="margin-top:0"><button class="copy">Copy prompt</button><button class="run primary" hidden ${lacking.length?"disabled":""}>Run with Claude</button><button class="stop" hidden>Stop</button></div>
+      <div class="out"></div>`;
+    card.querySelector(".copy").onclick=e=>copy(text,e.target);
+    card.querySelector(".run").hidden=!sample;
+    card.querySelector(".run").onclick=()=>run(text,card);
+    if(!lacking.length)runners.push(()=>run(text,card));
+    host.append(card);
+  });
+  $("runall").hidden=!sample||!runners.length;
+  host.scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("runall").onclick=async()=>{for(const r of runners)await r()};
+$("clear").onclick=()=>{FIELDS.forEach(f=>$(f).value="");try{localStorage.removeItem("rpl")}catch(e){}$("prompts").innerHTML="";$("runall").hidden=true;$("saved").textContent=""};
+</script>
