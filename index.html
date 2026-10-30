@@ -134,8 +134,11 @@ FIELDS.forEach(f=>$(f).addEventListener("input",()=>{$("err").hidden=true;save()
 load();
 
 let sample=null,mcp=null,runners=[];
-claude.use("sample").then(s=>{sample=s;if(s){document.querySelectorAll(".run,.pick").forEach(b=>b.hidden=false);$("pickhint").hidden=false}});
-claude.use("mcp").then(m=>{mcp=m});
+/* claude only exists on claude.ai; elsewhere the page is fill-and-copy only */
+if(window.claude){
+  claude.use("sample").then(s=>{sample=s;if(s){document.querySelectorAll(".run,.pick").forEach(b=>b.hidden=false);$("pickhint").hidden=false}});
+  claude.use("mcp").then(m=>{mcp=m});
+}
 
 /* ---- Choose for me: live web research (Apify) + Claude recommendation ---- */
 const research={};  /* niche -> {text, sources, live} */
